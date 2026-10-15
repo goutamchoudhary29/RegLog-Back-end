@@ -36,3 +36,8 @@ build/
 .env
 .env.*
 !.env.example
+/bin/
+
+data/
+*.mv.db
+*.trace.db

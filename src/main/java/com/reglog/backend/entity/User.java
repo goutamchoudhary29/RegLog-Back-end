@@ -25,6 +25,9 @@ public class User {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    @Column(name = "role", nullable = false, length = 50)
+    private String role = "ROLE_USER";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -36,6 +39,9 @@ public class User {
         Instant now = Instant.now();
         createdAt = now;
         updatedAt = now;
+        if (role == null || role.isBlank()) {
+            role = "ROLE_USER";
+        }
     }
 
     @PreUpdate
@@ -53,6 +59,8 @@ public class User {
     public void setMobileNumber(String mobileNumber) { this.mobileNumber = mobileNumber; }
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }

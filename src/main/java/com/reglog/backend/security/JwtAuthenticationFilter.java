@@ -53,9 +53,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (session != null && !session.isRevoked() && session.getExpiresAt().isAfter(Instant.now())) {
                     User user = userRepository.findById(claims.userId()).orElse(null);
                     if (user != null) {
-                        UserPrincipal principal = new UserPrincipal(user.getId(), user.getEmail(), user.getFullName());
+                        String role = (user.getRole() != null && !user.getRole().isBlank()) ? user.getRole() : claims.role();
+                        UserPrincipal principal = new UserPrincipal(user.getId(), user.getEmail(), user.getFullName(), role);
                         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                                principal, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+                                principal, null, List.of(new SimpleGrantedAuthority(role)));
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
                 }

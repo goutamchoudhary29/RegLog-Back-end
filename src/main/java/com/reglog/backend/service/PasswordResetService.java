@@ -46,28 +46,29 @@ public class PasswordResetService {
     @Transactional
     public MessageResponse forgotPassword(ForgotPasswordRequest request) {
         User user = userRepository.findByEmail(request.email()).orElse(null);
-        if (user != null) {
-            PasswordReset reset = passwordResetRepository.findByUser(user).orElseGet(() -> {
-                PasswordReset created = new PasswordReset();
-                created.setUser(user);
-                return created;
-            });
-            reset.setUser(user);
-            Instant now = Instant.now();
-            if (reset.getLastSentAt() != null && reset.getLastSentAt().plusSeconds(RESEND_COOLDOWN_SECONDS).isAfter(now)) {
-                throw new TooManyRequestsException("Please wait before requesting another OTP");
-            }
-            String otp = SecureHashUtil.randomOtp();
-            reset.setOtpHash(SecureHashUtil.sha256Hex(otp));
-            reset.setOtpExpiresAt(now.plusSeconds(OTP_EXPIRY_MINUTES * 60));
-            reset.setAttempts(0);
-            reset.setLastSentAt(now);
-            reset.setResetTokenHash(null);
-            reset.setResetExpiresAt(null);
-            passwordResetRepository.save(reset);
-            emailService.sendOtp(user.getEmail(), otp);
+        if (user == null) {
+            throw new BadRequestException("No registered account found with email: " + request.email() + ". Please check your email or register first.");
         }
-        return new MessageResponse("If an account exists for that email, an OTP has been sent.");
+        PasswordReset reset = passwordResetRepository.findByUser(user).orElseGet(() -> {
+            PasswordReset created = new PasswordReset();
+            created.setUser(user);
+            return created;
+        });
+        reset.setUser(user);
+        Instant now = Instant.now();
+        if (reset.getLastSentAt() != null && reset.getLastSentAt().plusSeconds(RESEND_COOLDOWN_SECONDS).isAfter(now)) {
+            throw new TooManyRequestsException("Please wait before requesting another OTP");
+        }
+        String otp = SecureHashUtil.randomOtp();
+        reset.setOtpHash(SecureHashUtil.sha256Hex(otp));
+        reset.setOtpExpiresAt(now.plusSeconds(OTP_EXPIRY_MINUTES * 60));
+        reset.setAttempts(0);
+        reset.setLastSentAt(now);
+        reset.setResetTokenHash(null);
+        reset.setResetExpiresAt(null);
+        passwordResetRepository.save(reset);
+        emailService.sendOtp(user.getEmail(), otp);
+        return new MessageResponse("OTP sent successfully. (Dev OTP: " + otp + ")", otp);
     }
 
     @Transactional

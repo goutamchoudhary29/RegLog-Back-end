@@ -21,20 +21,24 @@ public class JwtService {
         this.properties = properties;
     }
 
-    public record TokenClaims(Long userId, String email, String fullName, String jti, Instant expiresAt) {}
+    public record TokenClaims(Long userId, String username, String email, String fullName, String role, String jti, Instant expiresAt) {}
 
     public String generateToken(User user, String jti) {
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(properties.jwt.getAccessTokenMinutes() * 60);
         SecretKey key = signingKey();
+        String role = (user.getRole() != null && !user.getRole().isBlank()) ? user.getRole() : "ROLE_USER";
         return Jwts.builder()
                 .issuer(properties.jwt.getIssuer())
-                .subject(user.getId().toString())
+                .subject(user.getEmail())
                 .id(jti)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))
+                .claim("userId", user.getId())
+                .claim("username", user.getEmail())
                 .claim("email", user.getEmail())
                 .claim("fullName", user.getFullName())
+                .claim("role", role)
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
     }
@@ -47,15 +51,36 @@ public class JwtService {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-            if (claims.getSubject() == null || claims.getId() == null || claims.getExpiration() == null) {
+            if (claims.getId() == null || claims.getExpiration() == null) {
                 return null;
             }
-            Long userId = Long.valueOf(claims.getSubject());
+            Long userId = claims.get("userId", Long.class);
+            if (userId == null && claims.getSubject() != null) {
+                try {
+                    userId = Long.valueOf(claims.getSubject());
+                } catch (NumberFormatException ignored) {}
+            }
+            if (userId == null) {
+                return null;
+            }
             Instant expiry = claims.getExpiration().toInstant();
             if (expiry.isBefore(Instant.now())) {
                 return null;
             }
-            return new TokenClaims(userId, claims.get("email", String.class), claims.get("fullName", String.class), claims.getId(), expiry);
+            String email = claims.get("email", String.class);
+            if (email == null) {
+                email = claims.getSubject();
+            }
+            String username = claims.get("username", String.class);
+            if (username == null) {
+                username = email;
+            }
+            String role = claims.get("role", String.class);
+            if (role == null) {
+                role = "ROLE_USER";
+            }
+            String fullName = claims.get("fullName", String.class);
+            return new TokenClaims(userId, username, email, fullName, role, claims.getId(), expiry);
         } catch (Exception ex) {
             return null;
         }
