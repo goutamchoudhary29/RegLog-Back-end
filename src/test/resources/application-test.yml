@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DATABASE_TO_UPPER=false;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate:
+        format_sql: false
+  flyway:
+    enabled: false
+  mail:
+    host:
+
+app:
+  jwt:
+    secret: test-secret-please-use-32-plus-bytes-for-tests
+    access-token-minutes: 30
+  cookie:
+    secure: false
+  cors:
+    allowed-origin: http://localhost:5173
