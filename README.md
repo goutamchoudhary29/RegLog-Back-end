@@ -89,7 +89,7 @@ SMTP is configured through environment variables. The application starts even wh
 ## Testing
 
 ```bash
-mvn test
+.\mvnw test
 ```
 
 The project contains no large automated suite by design. Compilation, startup, database migration, registration, login, cookie access, logout replay, invalid credentials, duplicate data, OTP verification, reset, and change password were smoke-tested against MySQL.
@@ -97,5 +97,5 @@ The project contains no large automated suite by design. Compilation, startup, d
 ## Running
 
 ```bash
-mvn spring-boot:run
+.\mvnw spring-boot:run
 ```
